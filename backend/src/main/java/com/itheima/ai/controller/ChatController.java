@@ -1,5 +1,7 @@
 package com.itheima.ai.controller;
 
+import com.itheima.ai.enums.ChatType;
+import com.itheima.ai.service.IChatHistoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -21,6 +23,7 @@ import java.util.Objects;
 public class ChatController {
 
     private final ChatClient chatClient;
+    private final IChatHistoryService chatHistoryService;
 
     @RequestMapping(value = "/chat", produces = "text/html;charset=utf-8")
     public Flux<String> chat(@RequestParam("prompt") String prompt,
@@ -32,8 +35,10 @@ public class ChatController {
          */
         // Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        // 用 userId 给会话 id 加前缀，实现按用户隔离
-        String conversationId = userId + ":" + chatId;
+        // 用 userId type 给会话 id 加前缀，实现按用户隔离
+        String conversationId = userId + ":" + ChatType.CHAT.getValue() + ":" + chatId;
+        // 登记会话
+        chatHistoryService.saveSession(userId, ChatType.CHAT, chatId);
         // 分发：没图走纯文字，有图走多模态
         if (files == null || files.isEmpty()) {
             return textChat(prompt, conversationId);
