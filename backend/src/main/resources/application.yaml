@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: backend
+  profiles:
+    active: local
+  ai:
+    anthropic:
+      chat:
+        options:
+          model: claude-sonnet-4-6
+logging:
+  level:
+    org.springframework.ai: debug
+    com.itheima.ai: debug
