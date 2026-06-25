@@ -8,6 +8,11 @@ spring:
       chat:
         options:
           model: claude-sonnet-4-6
+    chat:
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always # 启动时自动建记忆表
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/ai_tool_collection?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
