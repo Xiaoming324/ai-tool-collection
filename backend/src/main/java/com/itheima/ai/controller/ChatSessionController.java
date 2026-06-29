@@ -10,6 +10,7 @@ import com.itheima.ai.entity.vo.MessageVO;
 import com.itheima.ai.entity.vo.Result;
 import com.itheima.ai.enums.ChatType;
 import com.itheima.ai.exception.BusinessException;
+import com.itheima.ai.service.FileStorageService;
 import com.itheima.ai.service.IChatMessageAttachmentService;
 import com.itheima.ai.service.IChatMessageService;
 import com.itheima.ai.service.IChatSessionService;
@@ -35,6 +36,7 @@ public class ChatSessionController {
     private final IChatMessageService chatMessageService;
     private final IChatMessageAttachmentService chatMessageAttachmentService;
     private final IStoredFileService storedFileService;
+    private final FileStorageService fileStorageService;
 
     @GetMapping("/{type}")
     public Result<List<ChatSessionVO>> listSessions(@PathVariable ChatType type,
@@ -75,8 +77,12 @@ public class ChatSessionController {
         List<AttachmentVO> attachmentVOS = attachments.stream()
                 .map(attachment -> storedFileMap.get(attachment.getFileId()))
                 .filter(java.util.Objects::nonNull)
-                .map(AttachmentVO::new)
+                .map(this::toAttachmentVO)
                 .toList();
         return new MessageVO(message, attachmentVOS);
+    }
+
+    private AttachmentVO toAttachmentVO(StoredFile storedFile) {
+        return new AttachmentVO(storedFile, fileStorageService.generatePresignedUrl(storedFile));
     }
 }
