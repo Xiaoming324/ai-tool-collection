@@ -1,9 +1,14 @@
 package com.itheima.ai.controller;
 
+import com.itheima.ai.entity.po.ChatMessage;
 import com.itheima.ai.entity.po.ChatSession;
+import com.itheima.ai.entity.po.StoredFile;
 import com.itheima.ai.enums.ChatType;
+import com.itheima.ai.enums.FileKind;
+import com.itheima.ai.service.IChatMessageAttachmentService;
 import com.itheima.ai.service.IChatMessageService;
 import com.itheima.ai.service.IChatSessionService;
+import com.itheima.ai.service.IStoredFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -28,6 +33,8 @@ public class ChatController {
     private final ChatClient chatClient;
     private final IChatSessionService chatSessionService;
     private final IChatMessageService chatMessageService;
+    private final IStoredFileService storedFileService;
+    private final IChatMessageAttachmentService chatMessageAttachmentService;
 
     @RequestMapping(value = "/chat", produces = "text/html;charset=utf-8")
     public Flux<String> chat(@RequestParam("prompt") String prompt,
@@ -44,7 +51,11 @@ public class ChatController {
 
         chatSessionService.createOrUpdateSession(userId, ChatType.CHAT, chatId, prompt);
         ChatSession session = chatSessionService.getByUserIdAndTypeAndChatId(userId, ChatType.CHAT, chatId);
-        chatMessageService.saveUserMessage(session.getId(), userId, prompt);
+        ChatMessage userMessage = chatMessageService.saveUserMessage(session.getId(), userId, prompt);
+
+        if (files != null && !files.isEmpty()) {
+            saveImageAttachments(userId, chatId, session, userMessage, files);
+        }
 
         Flux<String> response;
         if (files == null || files.isEmpty()) {
@@ -78,6 +89,29 @@ public class ChatController {
                 .advisors(a -> a.param(ChatMemory.CONVERSATION_ID, conversationId))
                 .stream()
                 .content();
+    }
+
+    private void saveImageAttachments(Long userId,
+                                      String chatId,
+                                      ChatSession session,
+                                      ChatMessage userMessage,
+                                      List<MultipartFile> files) {
+        for (int i = 0; i < files.size(); i++) {
+            MultipartFile file = files.get(i);
+            StoredFile storedFile = storedFileService.saveFileMetadata(
+                    userId,
+                    session.getId(),
+                    FileKind.IMAGE,
+                    file,
+                    "dev-bucket",
+                    "uploads/" + userId + "/" + chatId + "/" + file.getOriginalFilename()
+            );
+            chatMessageAttachmentService.bindFileToMessage(
+                    userMessage.getId(),
+                    storedFile.getId(),
+                    i
+            );
+        }
     }
 
     private Flux<String> recordAssistantReply(Flux<String> response, Long sessionId, Long userId) {

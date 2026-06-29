@@ -5,11 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.ai.chat.messages.Message;
 
+import java.util.List;
+
 @NoArgsConstructor
 @Data
 public class MessageVO {
     private String role;
     private String content;
+    private List<AttachmentVO> attachments = List.of();
 
     public MessageVO(Message message) {
         switch (message.getMessageType()) {
@@ -28,5 +31,10 @@ public class MessageVO {
     public MessageVO(ChatMessage message) {
         this.role = message.getRole() == null ? "" : message.getRole().getValue();
         this.content = message.getTextContent();
+    }
+
+    public MessageVO(ChatMessage message, List<AttachmentVO> attachments) {
+        this(message);
+        this.attachments = attachments == null ? List.of() : attachments;
     }
 }

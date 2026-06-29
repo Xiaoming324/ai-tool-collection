@@ -1,14 +1,19 @@
 package com.itheima.ai.controller;
 
 import com.itheima.ai.entity.po.ChatMessage;
+import com.itheima.ai.entity.po.ChatMessageAttachment;
 import com.itheima.ai.entity.po.ChatSession;
+import com.itheima.ai.entity.po.StoredFile;
+import com.itheima.ai.entity.vo.AttachmentVO;
 import com.itheima.ai.entity.vo.ChatSessionVO;
 import com.itheima.ai.entity.vo.MessageVO;
 import com.itheima.ai.entity.vo.Result;
 import com.itheima.ai.enums.ChatType;
 import com.itheima.ai.exception.BusinessException;
+import com.itheima.ai.service.IChatMessageAttachmentService;
 import com.itheima.ai.service.IChatMessageService;
 import com.itheima.ai.service.IChatSessionService;
+import com.itheima.ai.service.IStoredFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/ai/history")
@@ -25,6 +33,8 @@ public class ChatSessionController {
 
     private final IChatSessionService chatSessionService;
     private final IChatMessageService chatMessageService;
+    private final IChatMessageAttachmentService chatMessageAttachmentService;
+    private final IStoredFileService storedFileService;
 
     @GetMapping("/{type}")
     public Result<List<ChatSessionVO>> listSessions(@PathVariable ChatType type,
@@ -44,8 +54,29 @@ public class ChatSessionController {
             throw new BusinessException("Session does not exist");
         }
         List<ChatMessage> chatMessages = chatMessageService.listBySessionId(session.getId());
-        List<MessageVO> messageVOS = chatMessages.stream().map(MessageVO::new).toList();
+        List<MessageVO> messageVOS = chatMessages.stream()
+                .map(this::toMessageVO)
+                .toList();
 
         return Result.ok(messageVOS);
+    }
+
+    private MessageVO toMessageVO(ChatMessage message) {
+        List<ChatMessageAttachment> attachments = chatMessageAttachmentService.listByMessageId(message.getId());
+        if (attachments.isEmpty()) {
+            return new MessageVO(message);
+        }
+
+        List<Long> fileIds = attachments.stream()
+                .map(ChatMessageAttachment::getFileId)
+                .toList();
+        Map<Long, StoredFile> storedFileMap = storedFileService.listByIds(fileIds).stream()
+                .collect(Collectors.toMap(StoredFile::getId, Function.identity()));
+        List<AttachmentVO> attachmentVOS = attachments.stream()
+                .map(attachment -> storedFileMap.get(attachment.getFileId()))
+                .filter(java.util.Objects::nonNull)
+                .map(AttachmentVO::new)
+                .toList();
+        return new MessageVO(message, attachmentVOS);
     }
 }
