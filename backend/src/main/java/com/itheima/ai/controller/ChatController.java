@@ -1,13 +1,16 @@
 package com.itheima.ai.controller;
 
+import com.itheima.ai.entity.po.ChatSession;
 import com.itheima.ai.enums.ChatType;
-import com.itheima.ai.service.IChatHistoryService;
+import com.itheima.ai.service.IChatMessageService;
+import com.itheima.ai.service.IChatSessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.content.Media;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.MimeType;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +26,8 @@ import java.util.Objects;
 public class ChatController {
 
     private final ChatClient chatClient;
-    private final IChatHistoryService chatHistoryService;
+    private final IChatSessionService chatSessionService;
+    private final IChatMessageService chatMessageService;
 
     @RequestMapping(value = "/chat", produces = "text/html;charset=utf-8")
     public Flux<String> chat(@RequestParam("prompt") String prompt,
@@ -37,14 +41,18 @@ public class ChatController {
 
         // 用 userId type 给会话 id 加前缀，实现按用户隔离
         String conversationId = userId + ":" + ChatType.CHAT.getValue() + ":" + chatId;
-        // 登记会话
-        chatHistoryService.saveSession(userId, ChatType.CHAT, chatId);
-        // 分发：没图走纯文字，有图走多模态
+
+        chatSessionService.createOrUpdateSession(userId, ChatType.CHAT, chatId, prompt);
+        ChatSession session = chatSessionService.getByUserIdAndTypeAndChatId(userId, ChatType.CHAT, chatId);
+        chatMessageService.saveUserMessage(session.getId(), userId, prompt);
+
+        Flux<String> response;
         if (files == null || files.isEmpty()) {
-            return textChat(prompt, conversationId);
+            response = textChat(prompt, conversationId);
         } else {
-            return multiModalChat(prompt, conversationId, files);
+            response = multiModalChat(prompt, conversationId, files);
         }
+        return recordAssistantReply(response, session.getId(), userId);
     }
 
     // 纯文字
@@ -72,4 +80,15 @@ public class ChatController {
                 .content();
     }
 
+    private Flux<String> recordAssistantReply(Flux<String> response, Long sessionId, Long userId) {
+        StringBuilder assistantReply = new StringBuilder();
+        return response
+                .doOnNext(assistantReply::append)
+                .doOnComplete(() -> {
+                    String content = assistantReply.toString();
+                    if (StringUtils.hasText(content)) {
+                        chatMessageService.saveAssistantMessage(sessionId, userId, content);
+                    }
+                });
+    }
 }

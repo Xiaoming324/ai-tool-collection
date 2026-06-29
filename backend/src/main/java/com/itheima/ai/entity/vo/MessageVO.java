@@ -1,5 +1,6 @@
 package com.itheima.ai.entity.vo;
 
+import com.itheima.ai.entity.po.ChatMessage;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.ai.chat.messages.Message;
@@ -22,5 +23,10 @@ public class MessageVO {
                 this.role = "";
         }
         this.content = message.getText();
+    }
+
+    public MessageVO(ChatMessage message) {
+        this.role = message.getRole() == null ? "" : message.getRole().getValue();
+        this.content = message.getTextContent();
     }
 }
