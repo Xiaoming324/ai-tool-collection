@@ -1,10 +1,12 @@
 package com.itheima.ai.controller;
 
+import com.itheima.ai.entity.dto.StoredObjectInfo;
 import com.itheima.ai.entity.po.ChatMessage;
 import com.itheima.ai.entity.po.ChatSession;
 import com.itheima.ai.entity.po.StoredFile;
 import com.itheima.ai.enums.ChatType;
 import com.itheima.ai.enums.FileKind;
+import com.itheima.ai.service.FileStorageService;
 import com.itheima.ai.service.IChatMessageAttachmentService;
 import com.itheima.ai.service.IChatMessageService;
 import com.itheima.ai.service.IChatSessionService;
@@ -33,6 +35,7 @@ public class ChatController {
     private final ChatClient chatClient;
     private final IChatSessionService chatSessionService;
     private final IChatMessageService chatMessageService;
+    private final FileStorageService fileStorageService;
     private final IStoredFileService storedFileService;
     private final IChatMessageAttachmentService chatMessageAttachmentService;
 
@@ -98,13 +101,14 @@ public class ChatController {
                                       List<MultipartFile> files) {
         for (int i = 0; i < files.size(); i++) {
             MultipartFile file = files.get(i);
+            StoredObjectInfo storedObjectInfo = fileStorageService.uploadImage(userId, chatId, file);
             StoredFile storedFile = storedFileService.saveFileMetadata(
                     userId,
                     session.getId(),
                     FileKind.IMAGE,
                     file,
-                    "dev-bucket",
-                    "uploads/" + userId + "/" + chatId + "/" + file.getOriginalFilename()
+                    storedObjectInfo.getBucket(),
+                    storedObjectInfo.getKey()
             );
             chatMessageAttachmentService.bindFileToMessage(
                     userMessage.getId(),
