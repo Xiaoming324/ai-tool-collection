@@ -70,10 +70,10 @@ public class PdfIngestionServiceImpl implements PdfIngestionService {
         List<Document> enrichedDocuments = documents.stream()
                 .map(document -> {
                     Map<String, Object> metadata = new HashMap<>(document.getMetadata());
-                    metadata.put("userId", storedFile.getUserId());
-                    metadata.put("sessionId", storedFile.getSessionId());
-                    metadata.put("fileId", storedFile.getId());
-                    metadata.put("fileKind", storedFile.getFileKind().getValue());
+                    metadata.put("user_id", storedFile.getUserId());
+                    metadata.put("session_id", storedFile.getSessionId());
+                    metadata.put("file_id", storedFile.getId());
+                    metadata.put("file_kind", storedFile.getFileKind().getValue());
                     metadata.put("originalFilename", storedFile.getOriginalFilename());
                     metadata.put("s3Bucket", storedFile.getS3Bucket());
                     metadata.put("s3Key", storedFile.getS3Key());

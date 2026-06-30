@@ -8,15 +8,16 @@ import com.itheima.ai.entity.vo.Result;
 import com.itheima.ai.enums.ChatType;
 import com.itheima.ai.enums.FileKind;
 import com.itheima.ai.exception.BusinessException;
-import com.itheima.ai.service.IChatSessionService;
-import com.itheima.ai.service.IStoredFileService;
-import com.itheima.ai.service.PdfIngestionService;
-import com.itheima.ai.service.S3FileService;
+import com.itheima.ai.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 
 import java.util.Locale;
 
@@ -24,11 +25,13 @@ import java.util.Locale;
 @RequestMapping("/ai/pdf")
 @RequiredArgsConstructor
 public class PdfController {
-
     private final IChatSessionService chatSessionService;
+    private final IChatMessageService chatMessageService;
     private final IStoredFileService storedFileService;
     private final S3FileService s3FileService;
     private final PdfIngestionService pdfIngestionService;
+    private final ChatClient pdfChatClient;
+
 
     @PostMapping("/upload/{chatId}")
     public Result<PdfUploadVO> uploadPdf(@PathVariable String chatId,
@@ -72,6 +75,34 @@ public class PdfController {
         return Result.ok(s3FileService.generatePresignedUrl(storedFile));
     }
 
+    @PostMapping(value = "/chat", produces = "text/html;charset=utf-8")
+    public Flux<String> chat(@RequestParam("prompt") String prompt,
+                             @RequestParam("chatId") String chatId,
+                             @AuthenticationPrincipal Long userId) {
+        ChatSession session = chatSessionService.getByUserIdAndTypeAndChatId(userId, ChatType.PDF, chatId);
+        if (session == null) {
+            throw new BusinessException("PDF session does not exist");
+        }
+
+        if (storedFileService.listBySessionIdAndFileKind(session.getId(), FileKind.PDF).isEmpty()) {
+            throw new BusinessException("No PDF file found in this session");
+        }
+
+        String conversationId = userId + ":" + ChatType.PDF.getValue() + ":" + chatId;
+        chatMessageService.saveUserMessage(session.getId(), userId, prompt);
+        String filterExpression = "user_id == " + userId + " AND session_id == " + session.getId();
+
+        Flux<String> response = pdfChatClient.prompt()
+                .user(prompt)
+                .advisors(advisor -> advisor
+                        .param(ChatMemory.CONVERSATION_ID, conversationId)
+                        .param(QuestionAnswerAdvisor.FILTER_EXPRESSION, filterExpression))
+                .stream()
+                .content();
+
+        return recordAssistantReply(response, session.getId(), userId);
+    }
+
     private boolean isPdfFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             return false;
@@ -83,5 +114,17 @@ public class PdfController {
 
         String filename = file.getOriginalFilename();
         return StringUtils.hasText(filename) && filename.toLowerCase(Locale.ROOT).endsWith(".pdf");
+    }
+
+    private Flux<String> recordAssistantReply(Flux<String> response, Long sessionId, Long userId) {
+        StringBuilder assistantReply = new StringBuilder();
+        return response
+                .doOnNext(assistantReply::append)
+                .doOnComplete(() -> {
+                    String content = assistantReply.toString();
+                    if (StringUtils.hasText(content)) {
+                        chatMessageService.saveAssistantMessage(sessionId, userId, content);
+                    }
+                });
     }
 }
