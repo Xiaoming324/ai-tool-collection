@@ -12,4 +12,6 @@ public interface IChatSessionService extends IService<ChatSession> {
     List<ChatSession> listSessions(Long userId, ChatType type);
 
     ChatSession getByUserIdAndTypeAndChatId(Long userId, ChatType type, String chatId);
+
+    void deleteSession(Long userId, ChatType type, String chatId);
 }

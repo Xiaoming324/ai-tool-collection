@@ -69,4 +69,12 @@ public class StoredFileServiceImpl extends ServiceImpl<StoredFileMapper, StoredF
                 .orderByAsc(StoredFile::getCreatedAt)
                 .list();
     }
+
+    @Override
+    public List<StoredFile> listBySessionId(Long sessionId) {
+        return lambdaQuery()
+                .eq(StoredFile::getSessionId, sessionId)
+                .orderByAsc(StoredFile::getCreatedAt)
+                .list();
+    }
 }

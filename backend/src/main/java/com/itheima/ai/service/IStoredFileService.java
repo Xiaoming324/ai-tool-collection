@@ -19,4 +19,6 @@ public interface IStoredFileService extends IService<StoredFile> {
 
     List<StoredFile> listBySessionIdAndFileKind(Long sessionId, FileKind fileKind);
 
+    List<StoredFile> listBySessionId(Long sessionId);
+
 }

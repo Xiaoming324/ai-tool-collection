@@ -31,4 +31,14 @@ public class ChatMessageAttachmentServiceImpl extends ServiceImpl<ChatMessageAtt
                 .orderByAsc(ChatMessageAttachment::getCreatedAt)
                 .list();
     }
+
+    @Override
+    public void removeByMessageIds(List<Long> messageIds) {
+        if (messageIds == null || messageIds.isEmpty()) {
+            return;
+        }
+        lambdaUpdate()
+                .in(ChatMessageAttachment::getMessageId, messageIds)
+                .remove();
+    }
 }

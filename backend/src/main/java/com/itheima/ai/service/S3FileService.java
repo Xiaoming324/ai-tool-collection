@@ -11,4 +11,6 @@ public interface S3FileService {
     StoredObjectInfo uploadPdf(Long userId, String chatId, MultipartFile file);
 
     String generatePresignedUrl(StoredFile storedFile);
+
+    void deleteObject(StoredFile storedFile);
 }

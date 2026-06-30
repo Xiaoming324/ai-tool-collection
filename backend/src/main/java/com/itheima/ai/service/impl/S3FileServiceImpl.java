@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -66,6 +67,27 @@ public class S3FileServiceImpl implements S3FileService {
         return s3Presigner.presignGetObject(presignRequest)
                 .url()
                 .toString();
+    }
+
+    @Override
+    public void deleteObject(StoredFile storedFile) {
+        if (storedFile == null) {
+            return;
+        }
+        if (!StringUtils.hasText(storedFile.getS3Bucket()) || !StringUtils.hasText(storedFile.getS3Key())) {
+            return;
+        }
+
+        DeleteObjectRequest request = DeleteObjectRequest.builder()
+                .bucket(storedFile.getS3Bucket())
+                .key(storedFile.getS3Key())
+                .build();
+
+        try {
+            s3Client.deleteObject(request);
+        } catch (Exception e) {
+            throw new BusinessException("Failed to delete file from S3", e);
+        }
     }
 
     private StoredObjectInfo uploadFile(Long userId, String chatId, MultipartFile file, String category) {

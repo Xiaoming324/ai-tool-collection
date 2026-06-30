@@ -17,6 +17,7 @@ import com.itheima.ai.service.IChatSessionService;
 import com.itheima.ai.service.IStoredFileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -61,6 +62,14 @@ public class ChatSessionController {
                 .toList();
 
         return Result.ok(messageVOS);
+    }
+
+    @DeleteMapping("/{type}/{chatId}")
+    public Result<Void> deleteSession(@PathVariable ChatType type,
+                                      @PathVariable String chatId,
+                                      @AuthenticationPrincipal Long userId) {
+        chatSessionService.deleteSession(userId, type, chatId);
+        return Result.ok();
     }
 
     private MessageVO toMessageVO(ChatMessage message) {

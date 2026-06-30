@@ -9,4 +9,6 @@ public interface IChatMessageAttachmentService extends IService<ChatMessageAttac
     ChatMessageAttachment bindFileToMessage(Long messageId, Long fileId, Integer sortOrder);
 
     List<ChatMessageAttachment> listByMessageId(Long messageId);
+
+    void removeByMessageIds(List<Long> messageIds);
 }
