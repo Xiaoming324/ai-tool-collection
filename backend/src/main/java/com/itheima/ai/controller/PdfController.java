@@ -8,18 +8,14 @@ import com.itheima.ai.entity.vo.Result;
 import com.itheima.ai.enums.ChatType;
 import com.itheima.ai.enums.FileKind;
 import com.itheima.ai.exception.BusinessException;
-import com.itheima.ai.service.S3FileService;
 import com.itheima.ai.service.IChatSessionService;
 import com.itheima.ai.service.IStoredFileService;
+import com.itheima.ai.service.PdfIngestionService;
+import com.itheima.ai.service.S3FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Locale;
@@ -32,6 +28,7 @@ public class PdfController {
     private final IChatSessionService chatSessionService;
     private final IStoredFileService storedFileService;
     private final S3FileService s3FileService;
+    private final PdfIngestionService pdfIngestionService;
 
     @PostMapping("/upload/{chatId}")
     public Result<PdfUploadVO> uploadPdf(@PathVariable String chatId,
@@ -58,6 +55,7 @@ public class PdfController {
                 storedObjectInfo.getBucket(),
                 storedObjectInfo.getKey()
         );
+        pdfIngestionService.ingestPdf(storedFile);
         return Result.ok(new PdfUploadVO(chatId, storedFile));
     }
 

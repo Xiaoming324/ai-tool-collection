@@ -3,16 +3,35 @@ spring:
     name: backend
   profiles:
     active: local
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   ai:
     anthropic:
       chat:
         options:
           model: claude-sonnet-4-6
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      embedding:
+        model: text-embedding-v4
+        dimensions: 1024
     chat:
       memory:
         repository:
           jdbc:
             initialize-schema: always # 启动时自动建记忆表
+    vectorstore:
+      redis:
+        index: ai_tool_collection_index
+        initialize-schema: true
+        prefix: "doc:"
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      client-type: jedis
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/ai_tool_collection?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
