@@ -1,6 +1,7 @@
 package com.itheima.ai.config;
 
 import com.itheima.ai.contant.SystemConstants;
+import com.itheima.ai.tool.TravelAssistantTool;
 import org.springframework.ai.anthropic.AnthropicChatModel;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -98,6 +99,19 @@ public class CommonConfiguration {
                                         .build())
                                 .build()
                 )
+                .build();
+    }
+
+    @Bean
+    public ChatClient travelChatClient(AnthropicChatModel model,
+                                       TravelAssistantTool travelAssistantTool) {
+        return ChatClient
+                .builder(model)
+                .defaultSystem(SystemConstants.TRAVEL_SYSTEM_PROMPT)
+                .defaultAdvisors(
+                        new SimpleLoggerAdvisor()
+                )
+                .defaultTools(travelAssistantTool)
                 .build();
     }
 }

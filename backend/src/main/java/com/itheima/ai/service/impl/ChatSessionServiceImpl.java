@@ -11,6 +11,7 @@ import com.itheima.ai.service.IChatMessageAttachmentService;
 import com.itheima.ai.service.IChatMessageService;
 import com.itheima.ai.service.IChatSessionService;
 import com.itheima.ai.service.IStoredFileService;
+import com.itheima.ai.service.ITravelItineraryService;
 import com.itheima.ai.service.S3FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.memory.ChatMemoryRepository;
@@ -35,6 +36,7 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
     private final S3FileService s3FileService;
     private final ChatMemoryRepository chatMemoryRepository;
     private final VectorStore vectorStore;
+    private final ITravelItineraryService travelItineraryService;
 
     @Override
     public void createOrUpdateSession(Long userId, ChatType type, String chatId, String prompt) {
@@ -104,6 +106,10 @@ public class ChatSessionServiceImpl extends ServiceImpl<ChatSessionMapper, ChatS
 
         if (type == ChatType.PDF) {
             deletePdfVectors(userId, session.getId());
+        }
+
+        if (type == ChatType.TRAVEL) {
+            travelItineraryService.removeBySessionId(session.getId());
         }
 
         String conversationId = buildConversationId(userId, type, chatId);

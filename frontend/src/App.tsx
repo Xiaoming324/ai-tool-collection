@@ -4,13 +4,14 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './contexts/AuthContext';
 import { ChatPage } from './pages/ChatPage';
 import { LoginPage } from './pages/LoginPage';
+import { ModuleHubPage } from './pages/ModuleHubPage';
 import { PdfPage } from './pages/PdfPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { TravelPage } from './pages/TravelPage';
 
 function AuthRedirect() {
   const { isAuthenticated } = useAuth();
-  return <Navigate to={isAuthenticated ? '/app/chat' : '/login'} replace />;
+  return <Navigate to={isAuthenticated ? '/app' : '/login'} replace />;
 }
 
 export default function App() {
@@ -21,8 +22,8 @@ export default function App() {
       <Route path="/register" element={<RegisterPage />} />
 
       <Route element={<ProtectedRoute />}>
+        <Route path="/app" element={<ModuleHubPage />} />
         <Route path="/app" element={<AppShell />}>
-          <Route index element={<Navigate to="/app/chat" replace />} />
           <Route path="chat" element={<ChatPage />} />
           <Route path="pdf" element={<PdfPage />} />
           <Route path="travel" element={<TravelPage />} />

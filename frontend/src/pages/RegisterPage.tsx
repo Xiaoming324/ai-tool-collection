@@ -7,51 +7,54 @@ export function RegisterPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitting(true);
     setError('');
-    setIsSubmitting(true);
 
     try {
       await register({ username, password });
-      navigate('/login', {
-        replace: true,
-        state: { registered: true },
-      });
+      navigate('/login', { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to create the account.');
+      setError(err instanceof Error ? err.message : 'Unable to create account.');
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   }
 
   return (
-    <div className="auth-scene">
-      <section className="auth-copy">
-        <p className="eyebrow">First-time setup</p>
-        <h1>Create an isolated workspace for your sessions, files, and future PDFs.</h1>
+    <div className="auth-page">
+      <section className="auth-hero">
+        <p className="section-eyebrow">First-time setup</p>
+        <h1>Create an isolated workspace for your chats, documents, images, and itineraries.</h1>
         <p>
-          Every user is separated by JWT-authenticated history, chat memory, and S3-backed file ownership.
+          The backend enforces per-user ownership for sessions, chat memory, stored files, PDF access,
+          and saved travel itineraries.
         </p>
-        <div className="auth-badges">
+        <div className="auth-tags">
           <span>User isolation</span>
-          <span>JWT auth</span>
-          <span>MySQL session history</span>
+          <span>JWT-secured APIs</span>
+          <span>Session deletion</span>
+          <span>Signed file access</span>
         </div>
       </section>
 
-      <section className="auth-card">
+      <section className="auth-panel">
         <div>
-          <p className="eyebrow">New account</p>
+          <p className="section-eyebrow">New account</p>
           <h2>Register</h2>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <label>
             Username
-            <input value={username} onChange={(event) => setUsername(event.target.value)} placeholder="No spaces" />
+            <input
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="3-20 chars, visible ASCII only"
+            />
           </label>
 
           <label>
@@ -60,14 +63,14 @@ export function RegisterPage() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder="6-20 chars, no spaces"
+              placeholder="6-20 chars, visible ASCII only"
             />
           </label>
 
           {error ? <div className="form-error">{error}</div> : null}
 
-          <button type="submit" className="primary-button" disabled={isSubmitting}>
-            {isSubmitting ? 'Creating...' : 'Create account'}
+          <button type="submit" className="primary-button wide" disabled={submitting}>
+            {submitting ? 'Creating...' : 'Create account'}
           </button>
         </form>
 

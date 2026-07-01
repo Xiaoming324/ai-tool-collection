@@ -33,7 +33,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 // 2. 验签解析，拿到 userId
                 Long userId = jwtUtil.getUserId(token);
                 // 3. 构造"已认证"对象，principal 放 userId，塞进 SecurityContext
-                var auth = new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (JwtException | IllegalArgumentException e) {
                 // token 无效/过期：不设认证，后面 Security 自然会拦

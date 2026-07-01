@@ -1,0 +1,32 @@
+# Local nginx installation
+spring-ai-nginx/
+
+# Original tutorial project (heima-ai source)
+heima-ai/
+
+# Personal/local image files
+Jack.png
+jlngj.jpg
+
+# Prototype
+prototype.html
+
+# Local PDF documents
+*.pdf
+
+# Local notes (not project docs)
+环境准备清单.md
+开发步骤.md
+设计文档.md
+中二知识笔记.pdf
+
+# Backend run log
+backend/backend-run.log
+backend-run.log
+
+# Node modules (frontend)
+frontend/node_modules/
+
+# Frontend build output
+frontend/dist/
+frontend/build/

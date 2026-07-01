@@ -3,6 +3,7 @@ package com.itheima.ai.controller;
 import com.itheima.ai.entity.dto.StoredObjectInfo;
 import com.itheima.ai.entity.po.ChatSession;
 import com.itheima.ai.entity.po.StoredFile;
+import com.itheima.ai.entity.vo.PdfSessionFileVO;
 import com.itheima.ai.entity.vo.PdfUploadVO;
 import com.itheima.ai.entity.vo.Result;
 import com.itheima.ai.enums.ChatType;
@@ -73,6 +74,23 @@ public class PdfController {
             throw new BusinessException("File is not a PDF");
         }
         return Result.ok(s3FileService.generatePresignedUrl(storedFile));
+    }
+
+    @GetMapping("/session/{chatId}/file")
+    public Result<PdfSessionFileVO> getPdfSessionFile(@PathVariable String chatId,
+                                                      @AuthenticationPrincipal Long userId) {
+        ChatSession session = chatSessionService.getByUserIdAndTypeAndChatId(userId, ChatType.PDF, chatId);
+        if (session == null) {
+            throw new BusinessException("PDF session does not exist");
+        }
+
+        StoredFile storedFile = storedFileService.getLatestBySessionIdAndFileKind(session.getId(), FileKind.PDF);
+        if (storedFile == null) {
+            throw new BusinessException("No PDF file found in this session");
+        }
+
+        String url = s3FileService.generatePresignedUrl(storedFile);
+        return Result.ok(new PdfSessionFileVO(chatId, storedFile, url));
     }
 
     @PostMapping(value = "/chat", produces = "text/html;charset=utf-8")

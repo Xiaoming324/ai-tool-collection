@@ -1,4 +1,13 @@
-import type { ApiResult, AuthForm, MessageItem, ModuleType, SendMessagePayload, SessionSummary } from '../types/app';
+import type {
+  ApiResult,
+  AuthForm,
+  MessageItem,
+  ModuleType,
+  PdfSessionFile,
+  PdfUploadResult,
+  SessionSummary,
+  TravelItinerary,
+} from '../types/app';
 
 const API_PREFIX = '/api';
 
@@ -30,6 +39,17 @@ async function request<T>(path: string, options: RequestOptions = {}) {
   return body.data;
 }
 
+function createFormData(data: Record<string, string>, files?: File[], fileField = 'files') {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    formData.append(key, value);
+  });
+  files?.forEach((file) => {
+    formData.append(fileField, file);
+  });
+  return formData;
+}
+
 export function register(data: AuthForm) {
   return request<void>('/auth/register', {
     method: 'POST',
@@ -51,47 +71,73 @@ export function login(data: AuthForm) {
 }
 
 export function listSessions(type: ModuleType, token: string) {
-  return request<SessionSummary[]>(`/ai/history/${type}`, {
-    token,
-  });
+  return request<SessionSummary[]>(`/ai/history/${type}`, { token });
 }
 
 export function getMessages(type: ModuleType, chatId: string, token: string) {
-  return request<MessageItem[]>(`/ai/history/${type}/${encodeURIComponent(chatId)}`, {
+  return request<MessageItem[]>(`/ai/history/${type}/${encodeURIComponent(chatId)}`, { token });
+}
+
+export function deleteSession(type: ModuleType, chatId: string, token: string) {
+  return request<void>(`/ai/history/${type}/${encodeURIComponent(chatId)}`, {
+    method: 'DELETE',
     token,
   });
 }
 
-export function createStreamRequest(
-  path: string,
-  payload: SendMessagePayload,
-  token: string,
-  method: 'GET' | 'POST',
-) {
-  if (method === 'GET') {
-    const query = new URLSearchParams({
-      prompt: payload.prompt,
-      chatId: payload.chatId,
-    });
-
-    return fetch(`${API_PREFIX}${path}?${query.toString()}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-  }
-
-  const formData = new FormData();
-  formData.append('prompt', payload.prompt);
-  formData.append('chatId', payload.chatId);
-  payload.files?.forEach((file) => formData.append('files', file));
-
-  return fetch(`${API_PREFIX}${path}`, {
+export function streamChatMessage(token: string, chatId: string, prompt: string, files: File[]) {
+  return fetch(`${API_PREFIX}/ai/chat`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
     },
+    body: createFormData({ prompt, chatId }, files),
+  });
+}
+
+export function uploadPdf(token: string, chatId: string, file: File) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return request<PdfUploadResult>(`/ai/pdf/upload/${encodeURIComponent(chatId)}`, {
+    method: 'POST',
+    token,
     body: formData,
   });
+}
+
+export function getPdfPreviewUrl(token: string, fileId: number) {
+  return request<string>(`/ai/pdf/file/${fileId}`, { token });
+}
+
+export function getPdfSessionFile(token: string, chatId: string) {
+  return request<PdfSessionFile>(`/ai/pdf/session/${encodeURIComponent(chatId)}/file`, { token });
+}
+
+export function streamPdfMessage(token: string, chatId: string, prompt: string) {
+  return fetch(`${API_PREFIX}/ai/pdf/chat`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: createFormData({ prompt, chatId }),
+  });
+}
+
+export function streamTravelMessage(token: string, chatId: string, prompt: string) {
+  return fetch(`${API_PREFIX}/ai/travel`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: createFormData({ prompt, chatId }),
+  });
+}
+
+export function listTravelItineraries(token: string) {
+  return request<TravelItinerary[]>('/ai/travel/itineraries', { token });
+}
+
+export function getTravelItinerary(token: string, itineraryId: number) {
+  return request<TravelItinerary>(`/ai/travel/itineraries/${itineraryId}`, { token });
 }

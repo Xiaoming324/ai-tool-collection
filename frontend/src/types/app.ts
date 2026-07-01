@@ -11,6 +11,11 @@ export interface AuthForm {
   password: string;
 }
 
+export interface AuthState {
+  token: string;
+  username: string;
+}
+
 export interface SessionSummary {
   id: number;
   chatId: string;
@@ -29,31 +34,44 @@ export interface MessageAttachment {
 export interface MessageItem {
   role: string;
   content: string;
-  attachments?: MessageAttachment[];
+  attachments: MessageAttachment[];
 }
 
-export interface SendMessagePayload {
+export interface TravelItinerary {
+  id: number;
   chatId: string;
-  prompt: string;
-  files?: File[];
+  title: string;
+  destination: string;
+  startDate: string | null;
+  endDate: string | null;
+  itineraryContent: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface AuthState {
-  token: string;
-  username: string;
+export interface PdfUploadResult {
+  fileId: number;
+  chatId: string;
+  originalFilename: string;
 }
 
-export interface ModuleDefinition {
+export interface PdfSessionFile {
+  fileId: number;
+  chatId: string;
+  originalFilename: string;
+  url: string;
+}
+
+export interface CachedPdfFile {
+  chatId: string;
+  fileId: number;
+  originalFilename: string;
+}
+
+export interface NavModule {
   type: ModuleType;
   label: string;
-  kicker: string;
-  heading: string;
-  description: string;
-  endpoint: string;
-  requestMethod: 'GET' | 'POST';
-  acceptsImages: boolean;
-  emptyTitle: string;
-  emptyDescription: string;
-  composerPlaceholder: string;
-  hint: string;
+  path: string;
+  summary: string;
+  note: string;
 }

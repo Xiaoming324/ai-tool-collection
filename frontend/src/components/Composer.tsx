@@ -1,26 +1,30 @@
 import { useRef, type KeyboardEvent } from 'react';
 
-type MessageComposerProps = {
-  acceptsImages: boolean;
-  disabled: boolean;
+type ComposerProps = {
   prompt: string;
-  files: File[];
+  files?: File[];
+  disabled?: boolean;
   placeholder: string;
+  submitLabel: string;
+  accept?: string;
+  allowFiles?: boolean;
   onPromptChange: (value: string) => void;
-  onFilesChange: (files: File[]) => void;
+  onFilesChange?: (files: File[]) => void;
   onSubmit: () => void;
 };
 
-export function MessageComposer({
-  acceptsImages,
-  disabled,
+export function Composer({
   prompt,
-  files,
+  files = [],
+  disabled = false,
   placeholder,
+  submitLabel,
+  accept,
+  allowFiles = false,
   onPromptChange,
   onFilesChange,
   onSubmit,
-}: MessageComposerProps) {
+}: ComposerProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -31,15 +35,15 @@ export function MessageComposer({
   }
 
   return (
-    <div className="composer-card">
-      {files.length > 0 ? (
+    <div className="composer-shell">
+      {allowFiles && files.length > 0 ? (
         <div className="upload-strip">
           {files.map((file) => (
             <div key={`${file.name}-${file.lastModified}`} className="upload-chip">
               <span>{file.name}</span>
               <button
                 type="button"
-                onClick={() => onFilesChange(files.filter((item) => item !== file))}
+                onClick={() => onFilesChange?.(files.filter((item) => item !== file))}
               >
                 Remove
               </button>
@@ -49,26 +53,26 @@ export function MessageComposer({
       ) : null}
 
       <div className="composer-row">
-        {acceptsImages ? (
+        {allowFiles ? (
           <>
             <input
               ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
               hidden
+              type="file"
+              accept={accept}
+              multiple
               onChange={(event) => {
-                onFilesChange(Array.from(event.target.files ?? []));
+                onFilesChange?.(Array.from(event.target.files ?? []));
                 event.target.value = '';
               }}
             />
             <button
               type="button"
               className="icon-button"
-              onClick={() => fileInputRef.current?.click()}
               disabled={disabled}
+              onClick={() => fileInputRef.current?.click()}
             >
-              Add images
+              Attach
             </button>
           </>
         ) : null}
@@ -82,8 +86,8 @@ export function MessageComposer({
           rows={1}
         />
 
-        <button type="button" className="send-button" onClick={onSubmit} disabled={disabled}>
-          Send
+        <button type="button" className="send-button" disabled={disabled} onClick={onSubmit}>
+          {submitLabel}
         </button>
       </div>
     </div>

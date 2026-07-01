@@ -77,4 +77,14 @@ public class StoredFileServiceImpl extends ServiceImpl<StoredFileMapper, StoredF
                 .orderByAsc(StoredFile::getCreatedAt)
                 .list();
     }
+
+    @Override
+    public StoredFile getLatestBySessionIdAndFileKind(Long sessionId, FileKind fileKind) {
+        return lambdaQuery()
+                .eq(StoredFile::getSessionId, sessionId)
+                .eq(StoredFile::getFileKind, fileKind)
+                .orderByDesc(StoredFile::getCreatedAt)
+                .last("limit 1")
+                .one();
+    }
 }
