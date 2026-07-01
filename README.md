@@ -151,9 +151,6 @@ cloud:
 jwt:
   secret: YOUR_JWT_SECRET               # any long random string
 
-travel:
-  opentripmap:
-    api-key: YOUR_OPENTRIPMAP_API_KEY   # optional, if using OpenTripMap
 ```
 
 > **Never commit this file.** It is already excluded in `backend/.gitignore`.
