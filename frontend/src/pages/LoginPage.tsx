@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { login } from '../lib/api';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { signIn } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -20,8 +19,7 @@ export function LoginPage() {
     try {
       const token = await login({ username, password });
       signIn(token, username);
-      const nextPath = (location.state as { from?: string } | null)?.from ?? '/app/chat';
-      navigate(nextPath, { replace: true });
+      navigate('/app', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to sign in.');
     } finally {

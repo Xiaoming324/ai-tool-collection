@@ -518,7 +518,7 @@ code {
 }
 
 .pdf-layout {
-  grid-template-columns: 320px minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-columns: 300px minmax(420px, 0.9fr) minmax(520px, 1.15fr);
 }
 
 .pdf-shell {
@@ -1037,19 +1037,38 @@ code {
   border-radius: 24px;
   border: 1px solid var(--line);
   background: var(--panel-3);
-  padding: 0.9rem;
+  padding: 0.8rem;
 }
 
 .composer-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 0.8rem;
-  align-items: end;
+  align-items: stretch;
+}
+
+.composer-row.with-files {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.composer-row.text-only {
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 220px);
 }
 
 .composer-row textarea {
-  min-height: 70px;
-  resize: vertical;
+  min-height: 64px;
+  max-height: 128px;
+  resize: none;
+  overflow: auto;
+  line-height: 1.45;
+}
+
+.composer-row .icon-button,
+.composer-row .send-button {
+  min-height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .footer-note {

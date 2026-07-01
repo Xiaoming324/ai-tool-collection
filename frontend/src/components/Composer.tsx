@@ -52,7 +52,7 @@ export function Composer({
         </div>
       ) : null}
 
-      <div className="composer-row">
+      <div className={`composer-row${allowFiles ? ' with-files' : ' text-only'}`}>
         {allowFiles ? (
           <>
             <input
