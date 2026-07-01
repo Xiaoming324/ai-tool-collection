@@ -1,10 +1,11 @@
 package com.itheima.ai.tool;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import com.itheima.ai.entity.po.TravelItinerary;
 import com.itheima.ai.exception.BusinessException;
 import com.itheima.ai.service.ITravelItineraryService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
@@ -21,6 +22,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class TravelAssistantTool {
@@ -30,10 +32,12 @@ public class TravelAssistantTool {
     private static final int DEFAULT_ATTRACTION_LIMIT = 8;
 
     private final ITravelItineraryService travelItineraryService;
-    private final RestClient restClient = RestClient.create();
+    private final RestClient restClient = RestClient.builder()
+            .defaultHeader("User-Agent", "AI-Tool-Collection/1.0 (https://github.com/xiaoming-ma/ai-tool-collection)")
+            .build();
 
     @Tool(description = "Get a destination guide summary for a city, region, or country")
-    public String getDestinationGuide(@ToolParam(description = "Destination name, such as Tokyo or Paris") String place) {
+    public String getDestinationGuide(@ToolParam(description = "Destination name in English, such as Tokyo or Paris or Beijing") String place) {
         if (!StringUtils.hasText(place)) {
             return "Destination name is required.";
         }
@@ -60,12 +64,13 @@ public class TravelAssistantTool {
                     extract
             ).trim();
         } catch (Exception e) {
+            log.error("getDestinationGuide failed for place={}", place, e);
             return "Failed to fetch destination guide for " + place + ".";
         }
     }
 
     @Tool(description = "Search nearby attractions for a destination")
-    public String searchAttractions(@ToolParam(description = "City or destination name, such as Kyoto or New York") String city) {
+    public String searchAttractions(@ToolParam(description = "City or destination name in English, such as Kyoto or New York or Shanghai") String city) {
         if (!StringUtils.hasText(city)) {
             return "Destination name is required.";
         }
@@ -97,13 +102,14 @@ public class TravelAssistantTool {
             }
             return joiner.toString();
         } catch (Exception e) {
+            log.error("searchAttractions failed for city={}", city, e);
             return "Failed to search attractions for " + city + ".";
         }
     }
 
     @Tool(description = "Get weather forecast for a destination")
     public String getWeather(
-            @ToolParam(description = "City or destination name, such as Tokyo") String city,
+            @ToolParam(description = "City or destination name in English, such as Tokyo or Beijing or Shanghai") String city,
             @ToolParam(description = "Trip start date in yyyy-MM-dd format. Optional.", required = false) String startDate,
             @ToolParam(description = "How many days to check, from 1 to 7. Optional.", required = false) Integer days) {
         if (!StringUtils.hasText(city)) {
@@ -136,6 +142,7 @@ public class TravelAssistantTool {
             }
             return joiner.toString();
         } catch (Exception e) {
+            log.error("getWeather failed for city={}", city, e);
             return "Failed to fetch weather for " + city + ".";
         }
     }
@@ -180,6 +187,7 @@ public class TravelAssistantTool {
                     StringUtils.hasText(timezones) ? timezones : "N/A"
             ).trim();
         } catch (Exception e) {
+            log.error("getCountryInfo failed for country={}", country, e);
             return "Failed to fetch country information for " + country + ".";
         }
     }
@@ -221,6 +229,7 @@ public class TravelAssistantTool {
                     node.path("date").asText("N/A")
             );
         } catch (Exception e) {
+            log.error("getExchangeRate failed for {}→{}", fromCurrency, toCurrency, e);
             return "Failed to fetch exchange rate from " + fromCurrency + " to " + toCurrency + ".";
         }
     }
@@ -326,6 +335,8 @@ public class TravelAssistantTool {
                 .queryParam("count", 1)
                 .queryParam("language", "en")
                 .queryParam("format", "json")
+                .build()
+                .encode()
                 .toUriString();
 
         JsonNode node = restClient.get().uri(url).retrieve().body(JsonNode.class);
@@ -446,7 +457,7 @@ public class TravelAssistantTool {
         }
 
         StringJoiner joiner = new StringJoiner(", ");
-        node.fieldNames().forEachRemaining(joiner::add);
+        node.propertyNames().forEach(joiner::add);
         return joiner.toString();
     }
 
@@ -456,7 +467,7 @@ public class TravelAssistantTool {
         }
 
         StringJoiner joiner = new StringJoiner(", ");
-        node.fields().forEachRemaining(entry -> joiner.add(entry.getValue().asText()));
+        node.properties().forEach(entry -> joiner.add(entry.getValue().asText()));
         return joiner.toString();
     }
 
