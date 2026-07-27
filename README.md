@@ -2,6 +2,8 @@
 
 A full-stack AI application built with Spring Boot 4 and React, demonstrating three practical AI capabilities: conversational chat with file attachments, PDF-based RAG (Retrieval-Augmented Generation), and an AI travel planning assistant powered by real-time tool calling.
 
+**[View Project Portfolio (PDF)](https://drive.google.com/file/d/1nVlMsaeMItN1QD2eWbhtr2vFbh4apt3e/view?usp=sharing)**
+
 ---
 
 ## Features
